@@ -1,0 +1,7 @@
+[package]
+name = "HackAssembler"
+version = "0.1.0"
+authors = ["babblet <frk.haha@hotmail.se>"]
+edition = "2018"
+
+[dependencies]
