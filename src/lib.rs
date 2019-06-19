@@ -1,9 +1,25 @@
-pub mod parser {
+pub mod assembler {
 	use std::io::Read;
-	use std::io::Error;
 	use std::fs::File;
-	use std::result::Result;
 	use std::string::String;
+
+	// Assembly instuction and its corresponding bit value
+	struct Instruction {
+		instruction: String,
+		bit_value: String,
+	}
+
+	//const 
+
+	pub fn translate(buffer: &mut String) {
+		let mut tempBuffer: String;
+		let mut dest: String;
+		let mut comp: String;
+		let mut jump: String;
+		for(char in buffer) {
+			
+		}		
+	}
 
 	pub fn parse(mut file_to_parse: File, buffer: &mut String) {
 		match file_to_parse.read_to_string(buffer) {
