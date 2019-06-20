@@ -10,7 +10,8 @@ use std::fs::File;
 use std::path::Path;
 use std::io::Write;
 use std::string::String;
-use hack_assembler::assembler;
+use hack_assembler::code;
+use hack_assembler::parser;
 
 fn main () {
 	//Get arguments
@@ -30,10 +31,10 @@ fn main () {
 	};
 
 	//Parse the content of the assembly file so that it only contains assembly instructions
-	assembler::parse(writable_file, &mut file_buffer);
-	
+	parser::parse(writable_file, &mut file_buffer);
+
 	//Translate the assembler instructions to bits
-	assembler::translate(&mut file_buffer);
+	code::translate(&mut file_buffer);
 
 	//Create an outfile and output buffer to it
 	let mut outfile: File = match File::create(file_path_output) {
