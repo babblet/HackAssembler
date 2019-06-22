@@ -2,15 +2,16 @@ pub mod assembler {
 	use std::io::Read;
 	use std::fs::File;
 	use std::string::String;
+	use std::str::Lines;
+	use std::vec::Vec;
 
-	/// Unpacks each instruction into its underlying fields
-	
+	/// Unpacks each instruction into its underlying fields	
 	pub struct Parser {
-		pub buffer: String,
-		pub buffer_position: usize,	
-		pub buffer_size: usize,
+		buffer: String,
+		buffer_size: usize,
+		lines: Vec<String>,
+		line_position: usize,
 		has_more_commands: bool,
-		current_command: String,
 	}
 
 	impl Parser {
@@ -22,13 +23,15 @@ pub mod assembler {
 			let mut buffer: String = String::new();
 			match file_to_read.read_to_string(&mut buffer) {
 				Ok(total_bytes_read) => {
-					println!("Read {} bytes from file", total_bytes_read);
+					println!("Read {} bytes from file", total_bytes_read);	
+					let mut lines: Vec<String> = Vec::new();
+					buffer.lines().for_each( |item| lines.push(item.to_string()));	
 					Some(Parser { 
-						buffer: buffer, 
-						buffer_position: 0,
+						buffer: buffer,
 						buffer_size: total_bytes_read,
+						lines: lines, 
+						line_position: 0,
 						has_more_commands: true,
-						current_command: String::new(), 
 					})
 				}, 
 				Err(e) => {
@@ -44,10 +47,37 @@ pub mod assembler {
 		
 		/// Reads the next command for the input, and makes it the current command.
 		/// Takes care of whitespace, if necessary.
-		/// Should be called only if hasMoreCommands() is true,
+		/// Should be called only if has_more_commands() is true,
 		/// Initially there is no current command.
-		fn advance() {
-			for()
+		pub fn advance(&mut self) {
+			if !self.has_more_commands || self.line_position > (self.lines.len() - 1) {
+				self.has_more_commands = false;
+				println!("There are no more commands");
+				return;
+			}	
+
+			let mut new_line: String = String::new();
+			let mut could_be_a_comment: bool = false;
+			for item in self.lines[self.line_position].chars() {
+				if item == '/' {
+					if could_be_a_comment {
+						break;
+					} else {
+						could_be_a_comment = true;
+					}
+				}
+				else if item != ' ' {
+					new_line.push(item);
+				}
+			}
+			if new_line.len() == 0 {
+				println!("Found a line with no commands");
+				self.lines.remove(self.line_position);
+			} else {
+				println!("{}: {}", self.line_position, new_line);
+				self.lines[self.line_position] = new_line;
+				self.line_position = self.line_position + 1;
+			}
 		}
 	
 //		/// Returns the type of the current command:

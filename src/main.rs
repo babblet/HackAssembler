@@ -30,7 +30,11 @@ fn main () {
 		None 	  => panic!("UNEXPECTED ERROR: We was able to read the file but somehow it did not return it!"),
 	};
 
-	print!("has_more_commands: {}\n", parser.has_more_commands());
+	println!("has_more_commands: {}\n", parser.has_more_commands());
+
+	while parser.has_more_commands() {
+		parser.advance();
+	}
 
 //	code::translate(&mut file_buffer);
 //

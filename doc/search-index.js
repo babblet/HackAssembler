@@ -1,4 +1,0 @@
-var N=null,E="",T="t",U="u",searchIndex={};
-var R=["string","parser","result","Parser"];
-searchIndex["lib"]={"doc":E,"i":[[0,"assembler","lib",E,N,N],[3,R[3],"lib::assembler","Unpacks each instruction into its underlying fields",N,N],[12,"buffer",E,E,0,N],[5,"translate",E,E,N,[[[R[0]]]]],[11,"new",E,"(Constructor) Opens the input file/stream and gets ready…",0,[[["file"]],[["option",[R[1]]],[R[1]]]]],[11,"from",E,E,0,[[[T]],[T]]],[11,"into",E,E,0,[[],[U]]],[11,"try_from",E,E,0,[[[U]],[R[2]]]],[11,"borrow",E,E,0,[[["self"]],[T]]],[11,"type_id",E,E,0,[[["self"]],["typeid"]]],[11,"borrow_mut",E,E,0,[[["self"]],[T]]],[11,"try_into",E,E,0,[[],[R[2]]]]],"p":[[3,R[3]]]};
-initSearch(searchIndex);addSearchOptions(searchIndex);

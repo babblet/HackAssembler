@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["translate",""]],"struct":[["Parser","Unpacks each instruction into its underlying fields"]]});
