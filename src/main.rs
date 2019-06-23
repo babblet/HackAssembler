@@ -9,8 +9,9 @@ use std::env;
 use std::fs::File;
 use std::path::Path;
 use std::string::String;
-use hack_assembler::assembler::Parser;
 use hack_assembler::assembler;
+use hack_assembler::assembler::Parser;
+use hack_assembler::assembler::CommandType;
 
 fn main () {
 	let arguments: Vec<String> = env::args().collect();
