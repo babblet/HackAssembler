@@ -77,7 +77,11 @@ pub mod assembler {
 		/// Takes care of whitespace, if necessary.
 		/// Should be called only if has_more_commands() is true,
 		/// Initially there is no current commands
-		pub fn advance(&mut self) {
+		/// Returns the type of the current command:
+		/// A_COMMAND for @xxx where xxx is either a symbol or a decimal number
+		/// C_COMMAND for dest = comp; jump
+		/// L_COMMAND for (xxx) where xxx is a symbol.
+		pub fn advance(&mut self) -> CommandType {
 			if !self.has_more_commands || self.next_line_position > (self.lines.len() - 1) {
 				self.has_more_commands = false;
 				return;
@@ -103,20 +107,32 @@ pub mod assembler {
 				self.lines[self.next_line_position].buffer = new_line;
 				self.next_line_position = self.next_line_position + 1;
 			}
-		}
-	
-		/// Returns the type of the current command:
-		/// A_COMMAND for @xxx where xxx is either a symbol or a decimal number
-		/// C_COMMAND for dest = comp; jump
-		/// L_COMMAND for (xxx) where xxx is a symbol.
-		pub fn command_type(&mut self) -> CommandType {
+
 			if (!self.has_more_commands) || ( self.next_line_position < 1) { return CommandType::NONE }
 
+			//Return what command it is or parse the C command
 			let current_command: Vec<char> = self.lines[self.next_line_position - 1].buffer.chars().collect();
 			if current_command.len() > 0 {
 				if current_command[0] == '(' { return CommandType::L }
 				else if current_command[0] == '@' { return CommandType::A }
-				else if current_command[0] != '/' && current_command[0] != ' ' { return CommandType::C }
+				else if current_command[0] != '/' && current_command[0] != ' ' { 
+					
+					let mut iter: u8 = 0;
+					let mut buffer: String = String::new();
+					for item in current_command {
+						if item == '=' {
+							self.lines[self.next_line_position - 1].dest = buffer; 
+							buffer = "";
+						}
+						if item == ';' {
+							self.lines[self.next_line_position - 1].comp = buffer;
+							buffer = "";
+						}
+						buffer.push(item);
+						iter = iter + 1;
+					}
+					return CommandType::C
+				}
 			}
 			CommandType::NONE
 		}
@@ -137,26 +153,27 @@ pub mod assembler {
 	impl Code {
 		/// Returns the binary code of the dest mnemonic.
 		/// Returns: 3 bits (as an String)
-		fn dest(mnemonic: String) -> String {
+		fn dest(mnemonic: String) -> &'static str {
 			let chars: Vec<char> = mnemonic.chars().collect();
 			let code: String = String::new();
 			code.push(chars[10]);
 			code.push(chars[11]);
 			code.push(chars[12]);
-			if code == ""    { String::new("000") }
-			if code == "M"   { String::new("001") }
-			if code == "D"   { String::new("010") }
-			if code == "MD"  { String::new("011") }
-			if code == "A"   { String::new("100") }
-			if code == "AM"  { String::new("101") }
-			if code == "AD"  { String::new("110") }
-			if code == "AMD" { String::new("111") }
+			if 	code == ""    { return "000" }
+			else if code == "M"   { return "001" }
+			else if code == "D"   { return "010" }
+			else if code == "MD"  { return "011" }
+			else if code == "A"   { return "100" }
+			else if code == "AM"  { return "101" }
+			else if code == "AD"  { return "110" }
+			else if code == "AMD" { return "111" }
 		}
 	
 		/// Returns the binary code of the comp mnemonic.
 		/// Returns: 7 bits (as an String)
-		fn comp(mnemonic: String) -> String {
+		fn comp(mnemonic: String) -> &'static str {
 			let chars: Vec<char> = mnemonic.chars().collect();
+			let a_code: char = chars[3];
 			let code: String = String::new();
 			code.push(chars[4]);
 			code.push(chars[5]);
@@ -164,21 +181,66 @@ pub mod assembler {
 			code.push(chars[7]);
 			code.push(chars[8]);
 			code.push(chars[9]);
-			if code == ""    { String::new("000000") }
-			
+			if a_code == '0' {
+				if      code == "0"   { return "101010" }
+				else if code == "1"   { return "111111" }
+				else if code == "-1"  { return "111010" }
+				else if code == "D"   { return "001100" }
+				else if code == "A"   { return "110000" }
+				else if code == "!D"  { return "001101" }
+				else if code == "!A"  { return "110001" }
+				else if code == "-D"  { return "001111" }
+				else if code == "-A"  { return "110011" }
+				else if code == "D+1" { return "011111" }
+				else if code == "A+1" { return "110111" }
+				else if code == "D-1" { return "001110" }
+				else if code == "A-1" { return "110010" }
+				else if code == "D+A" { return "000010" }
+				else if code == "D-A" { return "010011" }
+				else if code == "A-D" { return "000111" }
+				else if code == "D&A" { return "000000" }
+				else if code == "D|A" { return "010101" }
+				else { "" }
+
+			} else if a_code == '1' {
+				if code == "M"   { return "110000" }
+				else if code == "!M"  { return "110001" }
+				else if code == "-M"  { return "110011" }
+				else if code == "M+1" { return "110111" }
+				else if code == "M-1" { return "110010" }
+				else if code == "D+M" { return "000010" }
+				else if code == "D-M" { return "010011" }
+				else if code == "M-D" { return "000111" }
+				else if code == "D&M" { return "000000" }
+				else if code == "D|M" { return "010101" }
+				else { "" }
+			} else { "" }
 		}
 	
 		/// Returns the binary code of the jump mnemonic.
 		/// Returns: 3 bits (as an String)
-		fn jump(mnemonic: String) -> String {
-
-		}
-	}
-//
-//	/// Manages the SybolTable
-//	struct SymbolTable {
-//	
-//	}
+		fn jump(mnemonic: String) -> &'static str {
+			let chars: Vec<char> = mnemonic.chars().collect();
+			let code: String = String::new();
+			code.push(chars[13]);
+			code.push(chars[14]);
+			code.push(chars[15]);
+			if      code == ""    { return "000" }
+			else if code == "JGT" { return "001" }
+			else if code == "JEQ" { return "010" }
+			else if codeif code == "JGE" { return "011" }
+			else if codeif code == "JLT" { return "100" }
+			else if codeif code == "JNE" { return "101" }
+			else if codeif code == "JLE" { return "110" }
+			else if codeif code == "JMP" { return "111" }
+			else { "" }
+		}              
+	}                      
+//                             
+//	/// Manages the SybolT able
+//	struct SymbolTable {   
+//	                       
+//	}                      
 //
 //	impl SymbolTable {
 //	
