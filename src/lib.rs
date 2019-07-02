@@ -15,26 +15,29 @@ pub mod assembler {
 		L,
 	}
 
-	struct Line {
-		buffer: String,
-		dest: String,
-		comp: String,
-		jump: String,
+	pub struct Line {
+		pub buffer: String,
+		pub dest: String,
+		pub comp: String,
+		pub jump: String,
 	}
 
 	impl Line {
 		pub fn new(mut buffer: String) -> Line {
 			Line {
 				buffer: buffer,
+				dest: String::new(),
+				comp: String::new(),
+				jump: String::new(),
 			}
 		}
 	}
 
-	/// Unpacks each instruction into its underlying fields	
+	/// unpacks each instruction into its underlying fields	
 	pub struct Parser {
 		buffer: String,
 		buffer_size: usize,
-		lines: Vec<Line>,
+		pub lines: Vec<Line>,
 		line_commands: Vec<CommandType>,
 		next_line_position: usize,
 		has_more_commands: bool,
@@ -84,11 +87,9 @@ pub mod assembler {
 		pub fn advance(&mut self) -> CommandType {
 			if !self.has_more_commands || self.next_line_position > (self.lines.len() - 1) {
 				self.has_more_commands = false;
-				return;
+				return CommandType::NONE;
 			}
 
-
-			self.parse_line();
 			let mut new_line: String = String::new();
 			let mut could_be_a_comment: bool = false;
 			for item in self.lines[self.next_line_position].buffer.chars() {
@@ -122,11 +123,11 @@ pub mod assembler {
 					for item in current_command {
 						if item == '=' {
 							self.lines[self.next_line_position - 1].dest = buffer; 
-							buffer = "";
+							buffer = String::new();
 						}
 						if item == ';' {
 							self.lines[self.next_line_position - 1].comp = buffer;
-							buffer = "";
+							buffer = String::new();
 						}
 						buffer.push(item);
 						iter = iter + 1;
@@ -146,35 +147,32 @@ pub mod assembler {
  	}
 
 	/// Translates each field into its corresponding binary value
-	struct Code {
+	pub struct Code {
 
 	}
 
 	impl Code {
 		/// Returns the binary code of the dest mnemonic.
 		/// Returns: 3 bits (as an String)
-		fn dest(mnemonic: String) -> &'static str {
-			let chars: Vec<char> = mnemonic.chars().collect();
-			let code: String = String::new();
-			code.push(chars[10]);
-			code.push(chars[11]);
-			code.push(chars[12]);
-			if 	code == ""    { return "000" }
-			else if code == "M"   { return "001" }
-			else if code == "D"   { return "010" }
-			else if code == "MD"  { return "011" }
-			else if code == "A"   { return "100" }
-			else if code == "AM"  { return "101" }
-			else if code == "AD"  { return "110" }
-			else if code == "AMD" { return "111" }
+		pub fn dest(mnemonic: String) -> String {
+			println!("dest: {}", mnemonic);
+			if 	mnemonic == "M"   { "001".to_string() }
+			else if mnemonic == "D"   { "010".to_string() }
+			else if mnemonic == "MD"  { "011".to_string() }
+			else if mnemonic == "A"   { "100".to_string() }
+			else if mnemonic == "AM"  { "101".to_string() }
+			else if mnemonic == "AD"  { "110".to_string() }
+			else if mnemonic == "AMD" { "111".to_string() }
+			else { return "000".to_string(); }
 		}
 	
 		/// Returns the binary code of the comp mnemonic.
 		/// Returns: 7 bits (as an String)
-		fn comp(mnemonic: String) -> &'static str {
+		pub fn comp(mnemonic: String) -> String {
+			println!("comp: {}", mnemonic);
 			let chars: Vec<char> = mnemonic.chars().collect();
-			let a_code: char = chars[3];
-			let code: String = String::new();
+			let a_code: char = chars[0];
+			let mut code: String = String::new();
 			code.push(chars[4]);
 			code.push(chars[5]);
 			code.push(chars[6]);
@@ -182,58 +180,58 @@ pub mod assembler {
 			code.push(chars[8]);
 			code.push(chars[9]);
 			if a_code == '0' {
-				if      code == "0"   { return "101010" }
-				else if code == "1"   { return "111111" }
-				else if code == "-1"  { return "111010" }
-				else if code == "D"   { return "001100" }
-				else if code == "A"   { return "110000" }
-				else if code == "!D"  { return "001101" }
-				else if code == "!A"  { return "110001" }
-				else if code == "-D"  { return "001111" }
-				else if code == "-A"  { return "110011" }
-				else if code == "D+1" { return "011111" }
-				else if code == "A+1" { return "110111" }
-				else if code == "D-1" { return "001110" }
-				else if code == "A-1" { return "110010" }
-				else if code == "D+A" { return "000010" }
-				else if code == "D-A" { return "010011" }
-				else if code == "A-D" { return "000111" }
-				else if code == "D&A" { return "000000" }
-				else if code == "D|A" { return "010101" }
-				else { "" }
+				if      code == "0"   { "101010".to_string() }
+				else if code == "1"   { "111111".to_string() }
+				else if code == "-1"  { "111010".to_string() }
+				else if code == "D"   { "001100".to_string() }
+				else if code == "A"   { "110000".to_string() }
+				else if code == "!D"  { "001101".to_string() }
+				else if code == "!A"  { "110001".to_string() }
+				else if code == "-D"  { "001111".to_string() }
+				else if code == "-A"  { "110011".to_string() }
+				else if code == "D+1" { "011111".to_string() }
+				else if code == "A+1" { "110111".to_string() }
+				else if code == "D-1" { "001110".to_string() }
+				else if code == "A-1" { "110010".to_string() }
+				else if code == "D+A" { "000010".to_string() }
+				else if code == "D-A" { "010011".to_string() }
+				else if code == "A-D" { "000111".to_string() }
+				else if code == "D&A" { "000000".to_string() }
+				else if code == "D|A" { "010101".to_string() }
+				else { "".to_string() }
 
 			} else if a_code == '1' {
-				if code == "M"   { return "110000" }
-				else if code == "!M"  { return "110001" }
-				else if code == "-M"  { return "110011" }
-				else if code == "M+1" { return "110111" }
-				else if code == "M-1" { return "110010" }
-				else if code == "D+M" { return "000010" }
-				else if code == "D-M" { return "010011" }
-				else if code == "M-D" { return "000111" }
-				else if code == "D&M" { return "000000" }
-				else if code == "D|M" { return "010101" }
-				else { "" }
-			} else { "" }
+				if      code == "M"   { "110000".to_string() }
+				else if code == "!M"  { "110001".to_string() }
+				else if code == "-M"  { "110011".to_string() }
+				else if code == "M+1" { "110111".to_string() }
+				else if code == "M-1" { "110010".to_string() }
+				else if code == "D+M" { "000010".to_string() }
+				else if code == "D-M" { "010011".to_string() }
+				else if code == "M-D" { "000111".to_string() }
+				else if code == "D&M" { "000000".to_string() }
+				else if code == "D|M" { "010101".to_string() }
+				else { "".to_string() }
+			} else { "".to_string() }
 		}
 	
 		/// Returns the binary code of the jump mnemonic.
 		/// Returns: 3 bits (as an String)
-		fn jump(mnemonic: String) -> &'static str {
+		pub fn jump(mnemonic: String) -> String {
+			println!("comp: {}", mnemonic);
 			let chars: Vec<char> = mnemonic.chars().collect();
-			let code: String = String::new();
+			let mut code: String = String::new();
 			code.push(chars[13]);
 			code.push(chars[14]);
 			code.push(chars[15]);
-			if      code == ""    { return "000" }
-			else if code == "JGT" { return "001" }
-			else if code == "JEQ" { return "010" }
-			else if codeif code == "JGE" { return "011" }
-			else if codeif code == "JLT" { return "100" }
-			else if codeif code == "JNE" { return "101" }
-			else if codeif code == "JLE" { return "110" }
-			else if codeif code == "JMP" { return "111" }
-			else { "" }
+			if      code == "JGT" { "001".to_string() }
+			else if code == "JEQ" { "010".to_string() }
+			else if code == "JGE" { "011".to_string() }
+			else if code == "JLT" { "100".to_string() }
+			else if code == "JNE" { "101".to_string() }
+			else if code == "JLE" { "110".to_string() }
+			else if code == "JMP" { "111".to_string() }
+			else { "000".to_string() }
 		}              
 	}                      
 //                             

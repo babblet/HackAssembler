@@ -10,6 +10,7 @@ use std::fs::File;
 use std::path::Path;
 use std::string::String;
 use hack_assembler::assembler;
+use hack_assembler::assembler::Code;
 use hack_assembler::assembler::Parser;
 use hack_assembler::assembler::CommandType;
 
@@ -35,6 +36,12 @@ fn main () {
 
 	while parser.has_more_commands() {
 		parser.advance();
+	}
+	
+	for line in parser.lines.iter() {
+		println!("{}", Code::dest(line.dest.clone()));
+		println!("{}", Code::comp(line.comp.clone()));
+		println!("{}", Code::jump(line.jump.clone()));
 	}
 
 //	code::translate(&mut file_buffer);
