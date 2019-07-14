@@ -39,9 +39,12 @@ fn main () {
 	}
 	
 	for line in parser.lines.iter() {
+		println!("{}", line.buffer);
 		if(line.commandType == CommandType::A) {
-			println!("{}", Code::memo(line.comp.clone()))
+			println!("CommandTypeA");
+			println!("{}", Code::MEMO(LINE.buffer.clone()));
 		} else {
+			println!("CommandTypeElse");
 			println!("{}", Code::dest(line.dest.clone()));
 			println!("{}", Code::comp(line.comp.clone()));
 			println!("{}", Code::jump(line.jump.clone()));

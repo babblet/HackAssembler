@@ -160,6 +160,7 @@ pub mod assembler {
 		/// Returns the binary code of the dest mnemonic.
 		/// Returns: 3 bits (as an String)
 		pub fn memo(mnemonic: String) -> String {
+			println!("Formating: {}", mnemonic);
 			let (_, formated) = mnemonic.split_at(1);
 			return format!("{:b}", mnemonic.parse::<u16>().unwrap());
 		}
