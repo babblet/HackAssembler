@@ -7,6 +7,7 @@
 
 use std::env;
 use std::fs::File;
+use std::io::Write;
 use std::path::Path;
 use std::string::String;
 use hack_assembler::assembler;
@@ -32,33 +33,33 @@ fn main () {
 		None 	  => panic!("UNEXPECTED ERROR: We was able to read the file but somehow it did not return it!"),
 	};
 
-	println!("has_more_commands: {}\n", parser.has_more_commands());
-
+	// Remove unwanted characters from input
 	while parser.has_more_commands() {
 		parser.advance();
 	}
 	
+	let mut outfile: File = match File::create(file_path_output) {
+		Ok(file) => file,
+		Err(e) => panic!("Error when creating file: {}", e),
+	};
+
+	//Assemble the code
+	let mut file_buffer = String::new();	
 	for line in parser.lines.iter() {
-		println!("{}", line.buffer);
+		//println!("{}", line.buffer);
 		if(line.commandType == CommandType::A) {
-			println!("CommandTypeA");
-			println!("{}", Code::MEMO(LINE.buffer.clone()));
+			file_buffer.push_str(&Code::memo(line.buffer.clone()));
+			file_buffer.push('\n');
 		} else {
-			println!("CommandTypeElse");
-			println!("{}", Code::dest(line.dest.clone()));
-			println!("{}", Code::comp(line.comp.clone()));
-			println!("{}", Code::jump(line.jump.clone()));
+			file_buffer.push_str(&"111".to_string());
+			file_buffer.push_str(&Code::comp(line.comp.clone()));
+			file_buffer.push_str(&Code::dest(line.dest.clone()));
+			file_buffer.push_str(&Code::jump(line.jump.clone()));
+			file_buffer.push('\n');
 		}
 	}
-
-//	code::translate(&mut file_buffer);
-//
-//	let mut outfile: File = match File::create(file_path_output) {
-//		Ok(file) => file,
-//		Err(e) => panic!("Error when creating file: {}", e),
-//	};
-//	match outfile.write(file_buffer.as_bytes()) {
-//		Ok(total_bytes_writen) => println!("Wrote {} bytes to file", total_bytes_writen),
-//		Err(e) => panic!("Error when writing to file: {}", e) 
-//	}
+	match outfile.write(file_buffer.as_bytes()) {
+		Ok(total_bytes_writen) => println!("Write {} bytes to file", total_bytes_writen),
+		Err(e) => panic!("Error when writing to file: {}", e) 
+	}
 }

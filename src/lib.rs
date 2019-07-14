@@ -2,9 +2,11 @@ pub mod assembler {
 	use std::io::Read;
 	use std::fs::File;
 	use std::string::String;
+	use std::string::ToString;
 	use std::str::Lines;
 	use std::str::Chars;
 	use std::vec::Vec;
+	use std::fmt::Binary;
 
 	/// Available command types
 	#[derive(PartialEq, Eq, Clone)]
@@ -107,7 +109,6 @@ pub mod assembler {
 			if new_line.len() == 0 {
 				self.lines.remove(self.next_line_position);
 			} else {
-				println!("{}: {}", self.next_line_position, new_line);
 				self.lines[self.next_line_position].buffer = new_line;
 				self.next_line_position = self.next_line_position + 1;
 			}
@@ -124,16 +125,34 @@ pub mod assembler {
 					self.lines[self.next_line_position - 1].commandType  = CommandType::A
 				}
 				else if current_command[0] != '/' && current_command[0] != ' ' { 		
-					let mut iter: u8 = 0;
+					let mut iter: usize = 0;
 					let mut buffer: String = String::new();
+					let command_length: usize = current_command.len();
+					let mut has_jump: bool = false;
 					for item in current_command {
 						if item == '=' {
 							self.lines[self.next_line_position - 1].dest = buffer; 
 							buffer = String::new();
-						}
-						if item == ';' {
+							iter = iter + 1;
+							continue;
+						} 
+						else if item == ';' {
 							self.lines[self.next_line_position - 1].comp = buffer;
 							buffer = String::new();
+							has_jump = true;
+							iter = iter + 1;
+							continue;
+						}
+						else if iter == (command_length - 1) {
+							buffer.push(item);
+							if(has_jump) {
+								self.lines[self.next_line_position - 1].jump = buffer;
+							}
+							else {
+								self.lines[self.next_line_position - 1].comp = buffer;
+							}
+							buffer = String::new();
+							continue;
 						}
 						buffer.push(item);
 						iter = iter + 1;
@@ -157,16 +176,23 @@ pub mod assembler {
 	}
 
 	impl Code {
-		/// Returns the binary code of the dest mnemonic.
-		/// Returns: 3 bits (as an String)
+		
+		/// Return a A command memory location
 		pub fn memo(mnemonic: String) -> String {
-			println!("Formating: {}", mnemonic);
-			let (_, formated) = mnemonic.split_at(1);
-			return format!("{:b}", mnemonic.parse::<u16>().unwrap());
+			let (_, formated_string) = mnemonic.split_at(1);
+			let formated_string_to_int = formated_string.parse::<i16>().unwrap();
+			let formated_int_to_binary: String = format!("{:b}", formated_string_to_int);
+
+			let mut formated_binary_string = String::new();
+			formated_binary_string.push_str(&"0".repeat(16 - formated_int_to_binary.len()));
+			formated_binary_string.push_str(&formated_int_to_binary);
+	
+			return formated_binary_string;
 		}
 
+		/// Returns the binary code of the dest mnemonic.
+		/// Returns: 3 bits (as an String)
 		pub fn dest(mnemonic: String) -> String {
-			println!("dest: {}", mnemonic);
 			if 	mnemonic == "M"   { "001".to_string() }
 			else if mnemonic == "D"   { "010".to_string() }
 			else if mnemonic == "MD"  { "011".to_string() }
@@ -180,7 +206,6 @@ pub mod assembler {
 		/// Returns the binary code of the comp mnemonic.
 		/// Returns: 7 bits (as an String)
 		pub fn comp(mnemonic: String) -> String {
-			println!("comp: {}", mnemonic);
 			if      mnemonic == "0"   { "0101010".to_string() }
 			else if mnemonic == "1"   { "0111111".to_string() }
 			else if mnemonic == "-1"  { "0111010".to_string() }
@@ -209,13 +234,12 @@ pub mod assembler {
 			else if mnemonic == "M-D" { "1000111".to_string() }
 			else if mnemonic == "D&M" { "1000000".to_string() }
 			else if mnemonic == "D|M" { "1010101".to_string() }
-			else { "".to_string() }
+			else { "0000000".to_string() }
 		}
 	
 		/// Returns the binary code of the jump mnemonic.
 		/// Returns: 3 bits (as an String)
 		pub fn jump(mnemonic: String) -> String {
-			println!("comp: {}", mnemonic);
 			if      mnemonic == "JGT" { "001".to_string() }
 			else if mnemonic == "JEQ" { "010".to_string() }
 			else if mnemonic == "JGE" { "011".to_string() }
