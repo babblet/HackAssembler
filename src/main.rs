@@ -39,9 +39,13 @@ fn main () {
 	}
 	
 	for line in parser.lines.iter() {
-		println!("{}", Code::dest(line.dest.clone()));
-		println!("{}", Code::comp(line.comp.clone()));
-		println!("{}", Code::jump(line.jump.clone()));
+		if(line.commandType == CommandType::A) {
+			println!("{}", Code::memo(line.comp.clone()))
+		} else {
+			println!("{}", Code::dest(line.dest.clone()));
+			println!("{}", Code::comp(line.comp.clone()));
+			println!("{}", Code::jump(line.jump.clone()));
+		}
 	}
 
 //	code::translate(&mut file_buffer);
