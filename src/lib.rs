@@ -3,10 +3,7 @@ pub mod assembler {
 	use std::fs::File;
 	use std::string::String;
 	use std::string::ToString;
-	use std::str::Lines;
-	use std::str::Chars;
 	use std::vec::Vec;
-	use std::fmt::Binary;
 
 	/// Available command types
 	#[derive(PartialEq, Eq, Clone)]
@@ -26,7 +23,7 @@ pub mod assembler {
 	}
 
 	impl Line {
-		pub fn new(mut buffer: String) -> Line {
+		pub fn new(buffer: String) -> Line {
 			Line {
 				commandType: CommandType::NONE,
 				buffer: buffer,
@@ -145,7 +142,7 @@ pub mod assembler {
 						}
 						else if iter == (command_length - 1) {
 							buffer.push(item);
-							if(has_jump) {
+							if has_jump {
 								self.lines[self.next_line_position - 1].jump = buffer;
 							}
 							else {
@@ -178,9 +175,9 @@ pub mod assembler {
 	impl Code {
 		
 		/// Return a A command memory location
-		pub fn memo(mnemonic: String) -> String {
+		pub fn memo(mnemonic: String, symbol_table: SymbolTable) -> String {
 			let (_, formated_string) = mnemonic.split_at(1);
-			let formated_string_to_int = formated_string.parse::<i16>().unwrap();
+			let formated_string_to_int = formated_string.parse::<u16>().unwrap();
 			let formated_int_to_binary: String = format!("{:b}", formated_string_to_int);
 
 			let mut formated_binary_string = String::new();
@@ -250,24 +247,40 @@ pub mod assembler {
 			else { "000".to_string() }
 		}              
 	}                      
-//                             
-//	/// Manages the SybolT able
-//	struct SymbolTable {   
-//	                       
-//	}                      
-//
-//	impl SymbolTable {
-//	
-//		/// (Constructor) Creates a new empty symbol table.
-//		fn new() {}
-//	
-//		/// Adds the pair (symbol, address) to the table.
-//		fn addEntry(symbol: String, address: u16) {}
-//	
-//		/// Does the symbol table contain the given symbol?
-//		fn contains(symbol: String) -> bool {}
-//	
-//		/// Returns the address associated with the symbol.
-//		fn getAddress() -> i16 {}
-//	}
+                             
+	/// Manages the SybolTable
+	struct SymbolTable {   
+		pub symbol: Vec<String>,
+		pub address: Vec<u16>,  
+	}                      
+
+	impl SymbolTable {
+	
+		/// (Constructor) Creates a new empty symbol table.
+		fn new() -> Option<SymbolTable> {
+			Some(
+				SymbolTable {
+					symbol: Vec::new(),
+					address: Vec::new(),
+				}
+			)
+		}
+	
+		/// Adds the pair (symbol, address) to the table.
+		fn addEntry(&mut self, symbol: String, address: u16) {
+			self.symbol.push(symbol);
+			self.address.push(address);
+		}
+	
+		/// Does the symbol table contain the given symbol?
+		fn contains(&self, symbol: String) -> bool {
+			return self.symbol.contains(&symbol);
+		}
+	
+		/// Returns the address associated with the symbol.
+		fn getAddress(&self, symbol: String) -> u16 {
+			let index = self.symbol.iter().position(|p| p == symbol).unwrap();
+			return self.address[index];
+		}
+	}
 }

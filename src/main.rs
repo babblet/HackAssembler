@@ -13,6 +13,7 @@ use std::string::String;
 use hack_assembler::assembler;
 use hack_assembler::assembler::Code;
 use hack_assembler::assembler::Parser;
+use hack_assembler::assembler::SymbolTable;
 use hack_assembler::assembler::CommandType;
 
 fn main () {
@@ -38,9 +39,17 @@ fn main () {
 		parser.advance();
 	}
 	
+
+	//Create outfile
 	let mut outfile: File = match File::create(file_path_output) {
 		Ok(file) => file,
 		Err(e) => panic!("Error when creating file: {}", e),
+	};
+
+	//Create a SymbolTable	
+	let mut symbol_table: SymbolTable = match SymbolTable::new() {
+		Some(obj) => obj,
+		None 	  => panic!("UNEXPECTED ERROR: Was not able to create SymbolTable!"),
 	};
 
 	//Assemble the code
@@ -48,7 +57,7 @@ fn main () {
 	for line in parser.lines.iter() {
 		//println!("{}", line.buffer);
 		if(line.commandType == CommandType::A) {
-			file_buffer.push_str(&Code::memo(line.buffer.clone()));
+			file_buffer.push_str(&Code::memo(line.buffer.clone(), symbol_table));
 			file_buffer.push('\n');
 		} else {
 			file_buffer.push_str(&"111".to_string());
@@ -63,3 +72,4 @@ fn main () {
 		Err(e) => panic!("Error when writing to file: {}", e) 
 	}
 }
+
