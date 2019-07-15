@@ -115,6 +115,7 @@ pub mod assembler {
 			//Get CommandType and slice command to dest, comp and jump
 			let current_command: Vec<char> = self.lines[self.next_line_position - 1].buffer.chars().collect();
 			if current_command.len() > 0 {
+				println!("current_command: {}",self.lines[self.next_line_position -1].buffer);
 				if current_command[0] == '(' { 
 					self.lines[self.next_line_position - 1].commandType = CommandType::L
 				}
@@ -175,7 +176,10 @@ pub mod assembler {
 	impl Code {
 		
 		/// Return a A command memory location
-		pub fn memo(mnemonic: String, symbol_table: SymbolTable) -> String {
+		pub fn memo(mnemonic: String, symbol_table: &SymbolTable) -> String {
+			symbol_table.contains();
+
+			symbol_table.contains();
 			let (_, formated_string) = mnemonic.split_at(1);
 			let formated_string_to_int = formated_string.parse::<u16>().unwrap();
 			let formated_int_to_binary: String = format!("{:b}", formated_string_to_int);
@@ -190,6 +194,7 @@ pub mod assembler {
 		/// Returns the binary code of the dest mnemonic.
 		/// Returns: 3 bits (as an String)
 		pub fn dest(mnemonic: String) -> String {
+			println!("dest: {}", mnemonic);
 			if 	mnemonic == "M"   { "001".to_string() }
 			else if mnemonic == "D"   { "010".to_string() }
 			else if mnemonic == "MD"  { "011".to_string() }
@@ -203,6 +208,7 @@ pub mod assembler {
 		/// Returns the binary code of the comp mnemonic.
 		/// Returns: 7 bits (as an String)
 		pub fn comp(mnemonic: String) -> String {
+			println!("comp: {}", mnemonic);
 			if      mnemonic == "0"   { "0101010".to_string() }
 			else if mnemonic == "1"   { "0111111".to_string() }
 			else if mnemonic == "-1"  { "0111010".to_string() }
@@ -237,6 +243,7 @@ pub mod assembler {
 		/// Returns the binary code of the jump mnemonic.
 		/// Returns: 3 bits (as an String)
 		pub fn jump(mnemonic: String) -> String {
+			println!("jump: {}", mnemonic);
 			if      mnemonic == "JGT" { "001".to_string() }
 			else if mnemonic == "JEQ" { "010".to_string() }
 			else if mnemonic == "JGE" { "011".to_string() }
@@ -249,36 +256,90 @@ pub mod assembler {
 	}                      
                              
 	/// Manages the SybolTable
-	struct SymbolTable {   
+	pub struct SymbolTable {   
 		pub symbol: Vec<String>,
-		pub address: Vec<u16>,  
+		pub address: Vec<u16>, 
+		pub next_var_address_pos: u16,
 	}                      
 
 	impl SymbolTable {
 	
 		/// (Constructor) Creates a new empty symbol table.
-		fn new() -> Option<SymbolTable> {
+		pub fn new() -> Option<SymbolTable> {
+			
+			//Add predefined symbols
+			let mut new_symbol_vec: Vec<String> = Vec::new();
+			new_symbol_vec.push("@R0".to_string());
+			new_symbol_vec.push("@R1".to_string());
+			new_symbol_vec.push("@R2".to_string());
+			new_symbol_vec.push("@R3".to_string());
+			new_symbol_vec.push("@R4".to_string());
+			new_symbol_vec.push("@R5".to_string());
+			new_symbol_vec.push("@R6".to_string());
+			new_symbol_vec.push("@R7".to_string());
+			new_symbol_vec.push("@R8".to_string());
+			new_symbol_vec.push("@R9".to_string());
+			new_symbol_vec.push("@R10".to_string());
+			new_symbol_vec.push("@R11".to_string());
+			new_symbol_vec.push("@R12".to_string());
+			new_symbol_vec.push("@R13".to_string());
+			new_symbol_vec.push("@R14".to_string());
+			new_symbol_vec.push("@SCREEN".to_string());
+			new_symbol_vec.push("@KBD".to_string());
+			new_symbol_vec.push("@SP".to_string());
+			new_symbol_vec.push("@LCL".to_string());
+			new_symbol_vec.push("@ARG".to_string());
+			new_symbol_vec.push("@THIS".to_string());
+			new_symbol_vec.push("@THAT".to_string());
+
+			//Add predefined addresses to symbols
+			let mut new_address_vec: Vec<u16> = Vec::new();
+			new_address_vec.push(0);
+			new_address_vec.push(1);
+			new_address_vec.push(2);
+			new_address_vec.push(3);
+			new_address_vec.push(4);
+			new_address_vec.push(5);
+			new_address_vec.push(6);
+			new_address_vec.push(7);
+			new_address_vec.push(8);
+			new_address_vec.push(9);
+			new_address_vec.push(10);
+			new_address_vec.push(11);
+			new_address_vec.push(12);
+			new_address_vec.push(13);
+			new_address_vec.push(14);
+			new_address_vec.push(15);
+			new_address_vec.push(16384);
+			new_address_vec.push(24576);
+			new_address_vec.push(0);
+			new_address_vec.push(1);
+			new_address_vec.push(2);
+			new_address_vec.push(3);
+			new_address_vec.push(4);
+
 			Some(
 				SymbolTable {
-					symbol: Vec::new(),
-					address: Vec::new(),
+					symbol: new_symbol_vec,
+					address: new_address_vec,
+					next_var_address_pos: 16,
 				}
 			)
 		}
 	
 		/// Adds the pair (symbol, address) to the table.
-		fn addEntry(&mut self, symbol: String, address: u16) {
+		pub fn addEntry(&mut self, symbol: String, address: u16) {
 			self.symbol.push(symbol);
 			self.address.push(address);
 		}
 	
 		/// Does the symbol table contain the given symbol?
-		fn contains(&self, symbol: String) -> bool {
+		pub fn contains(&self, symbol: String) -> bool {
 			return self.symbol.contains(&symbol);
 		}
 	
 		/// Returns the address associated with the symbol.
-		fn getAddress(&self, symbol: String) -> u16 {
+		pub fn getAddress(&self, symbol: &String) -> u16 {
 			let index = self.symbol.iter().position(|p| p == symbol).unwrap();
 			return self.address[index];
 		}

@@ -10,7 +10,6 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::string::String;
-use hack_assembler::assembler;
 use hack_assembler::assembler::Code;
 use hack_assembler::assembler::Parser;
 use hack_assembler::assembler::SymbolTable;
@@ -38,6 +37,8 @@ fn main () {
 	while parser.has_more_commands() {
 		parser.advance();
 	}
+
+	println!("Finished parsing!");
 	
 
 	//Create outfile
@@ -51,20 +52,26 @@ fn main () {
 		Some(obj) => obj,
 		None 	  => panic!("UNEXPECTED ERROR: Was not able to create SymbolTable!"),
 	};
+	println!("Create file and a SymbolTable");
 
 	//Assemble the code
 	let mut file_buffer = String::new();	
 	for line in parser.lines.iter() {
-		//println!("{}", line.buffer);
-		if(line.commandType == CommandType::A) {
-			file_buffer.push_str(&Code::memo(line.buffer.clone(), symbol_table));
+		println!("{}", line.buffer);
+		if line.commandType == CommandType::A {
+			println!("CommandType::A");
+			file_buffer.push_str(&Code::memo(line.buffer.clone(), &symbol_table));
 			file_buffer.push('\n');
-		} else {
+		} else if line.commandType == CommandType::C {
+			println!("CommandType::C");
 			file_buffer.push_str(&"111".to_string());
 			file_buffer.push_str(&Code::comp(line.comp.clone()));
 			file_buffer.push_str(&Code::dest(line.dest.clone()));
 			file_buffer.push_str(&Code::jump(line.jump.clone()));
 			file_buffer.push('\n');
+		} else {
+			println!("CommandType::L");
+			println!("{}",line.buffer);	
 		}
 	}
 	match outfile.write(file_buffer.as_bytes()) {
