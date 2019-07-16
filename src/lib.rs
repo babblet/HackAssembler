@@ -177,7 +177,6 @@ pub mod assembler {
 		/// Return a A command memory location
 		pub fn memo(mnemonic: String, symbol_table: &SymbolTable) -> String {
 			if symbol_table.contains(mnemonic.clone()) {
-				println!("Found in SymbolTable!");
 				let binary_address: String = format!("{:b}", symbol_table.get_address(&mnemonic.clone()));
 				let mut formated_address: String = String::new();
 				formated_address.push_str(&"0".repeat(16 - binary_address.len()));
@@ -185,7 +184,6 @@ pub mod assembler {
 				
 				return formated_address;
 			} else {
-				println!("Not found in SymbolTable");
 				let (_, formated_string) = mnemonic.split_at(1);
 				let formated_string_to_int = formated_string.parse::<u16>().unwrap();
 				let formated_int_to_binary: String = format!("{:b}", formated_string_to_int);
@@ -258,12 +256,13 @@ pub mod assembler {
 			else { "000".to_string() }
 		}              
 	}                      
-                             
+    
 	/// Manages the SybolTable
 	pub struct SymbolTable {   
 		pub symbol: Vec<String>,
 		pub address: Vec<u16>, 
-		pub next_var_address_pos: u16,
+		total_label_symbols: u16,
+		next_var_address_pos: u16,
 	}                      
 
 	impl SymbolTable {
@@ -327,18 +326,26 @@ pub mod assembler {
 				SymbolTable {
 					symbol: new_symbol_vec,
 					address: new_address_vec,
+					total_label_symbols: 0,
 					next_var_address_pos: 16,
 				}
 			)
 		}
-	
-		/// Adds the pair (symbol, address) to the table.
-		pub fn add_entry(&mut self, symbol: String, address: u16) {
+
+		pub fn add_variable_entry(&mut self, symbol: String) {
 			self.symbol.push(symbol);
-			self.address.push(address);
+			self.address.push(self.next_var_address_pos);
 			self.next_var_address_pos = self.next_var_address_pos + 1;
 		}
 	
+		/// Adds the pair (symbol, address) to the table.
+		pub fn add_symbol_entry(&mut self, symbol: String, address: u16) {
+			self.symbol.push(symbol);
+			self.address.push(address - self.total_label_symbols);
+			self.total_label_symbols = self.total_label_symbols + 1;
+		}
+	
+
 		/// Does the symbol table contain the given symbol?
 		pub fn contains(&self, symbol: String) -> bool {
 			return self.symbol.contains(&symbol);

@@ -31,7 +31,7 @@ fn main () {
 	
 	let mut parser: Parser = match Parser::new(writable_file) {
 		Some(obj) => obj,
-		None 	  => panic!("UNEXPECTED ERROR: We was able to read the file but somehow it did not return it!"),
+		None 	  => panic!("Error when trying to return file that was read!"),
 	};
 
 	// Remove unwanted characters from input
@@ -59,40 +59,53 @@ fn main () {
 		None => panic!("Error when creating SymbolTable"),
 	};
 
-	//Do a pass on the parsed lines and add the symbols to the SymbolTable
-	print!("Found symbols at positions: [");
+	//Do a pass on the parsed lines and add the label symbols to the SymbolTable
 	for (index, line) in parser.lines.iter().enumerate() {
 		if line.commandType == CommandType::L {
 			let buffer = line.buffer.clone();
 			let (_, sliced_line) = buffer.split_at(1);
 			let mut formated_string: String = sliced_line.to_string();
 			formated_string.pop();
-
 			let formated_index: u16 = u16::try_from(index).unwrap();
 
-			symbol_table.add_entry(format!("@{}", formated_string), formated_index);
+			symbol_table.add_symbol_entry(format!("@{}", formated_string), formated_index);
 		}
 	}
-	print!("]\n");
+	
+	//Do a pass on the parsed lines and add the variable symbols to the SymbolTable
+	for (index, line) in parser.lines.iter().enumerate() {
+		let buffer = line.buffer.clone();
+		let ( _ , number_buffer ) = buffer.split_at(1);
+		let is_number: bool = match number_buffer.parse::<u16>() {
+			Ok(_) => true,
+			Err(_) => false,
+		};
+
+		let in_symbol_table: bool = symbol_table.contains(buffer.clone());
+
+		if line.commandType == CommandType::A &&
+		   !is_number &&
+		   !in_symbol_table {
+			let (_, sliced_line) = buffer.split_at(1);
+			let mut formated_string: String = sliced_line.to_string();
+
+			symbol_table.add_variable_entry(format!("@{}", formated_string));
+		}
+	}
 
 	//Assemble the code
 	let mut file_buffer = String::new();
 	for line in parser.lines.iter() {
-		println!("{}", line.buffer);
 		if line.commandType == CommandType::A {
-			println!("CommandType::A");
 			file_buffer.push_str(&Code::memo(line.buffer.clone(), &symbol_table));
 			file_buffer.push('\n');
 		} else if line.commandType == CommandType::C {
-			println!("CommandType::C");
 			file_buffer.push_str(&"111".to_string());
 			file_buffer.push_str(&Code::comp(line.comp.clone()));
 			file_buffer.push_str(&Code::dest(line.dest.clone()));
 			file_buffer.push_str(&Code::jump(line.jump.clone()));
 			file_buffer.push('\n');
 		} else {
-			println!("CommandType::L");
-			println!("{}",line.buffer);
 		}
 	}
 	match outfile.write(file_buffer.as_bytes()) {
