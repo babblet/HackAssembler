@@ -115,7 +115,6 @@ pub mod assembler {
 			//Get CommandType and slice command to dest, comp and jump
 			let current_command: Vec<char> = self.lines[self.next_line_position - 1].buffer.chars().collect();
 			if current_command.len() > 0 {
-				println!("current_command: {}",self.lines[self.next_line_position -1].buffer);
 				if current_command[0] == '(' { 
 					self.lines[self.next_line_position - 1].commandType = CommandType::L
 				}
@@ -177,24 +176,31 @@ pub mod assembler {
 		
 		/// Return a A command memory location
 		pub fn memo(mnemonic: String, symbol_table: &SymbolTable) -> String {
-			symbol_table.contains();
+			if symbol_table.contains(mnemonic.clone()) {
+				println!("Found in SymbolTable!");
+				let binary_address: String = format!("{:b}", symbol_table.get_address(&mnemonic.clone()));
+				let mut formated_address: String = String::new();
+				formated_address.push_str(&"0".repeat(16 - binary_address.len()));
+				formated_address.push_str(&binary_address);
+				
+				return formated_address;
+			} else {
+				println!("Not found in SymbolTable");
+				let (_, formated_string) = mnemonic.split_at(1);
+				let formated_string_to_int = formated_string.parse::<u16>().unwrap();
+				let formated_int_to_binary: String = format!("{:b}", formated_string_to_int);
 
-			symbol_table.contains();
-			let (_, formated_string) = mnemonic.split_at(1);
-			let formated_string_to_int = formated_string.parse::<u16>().unwrap();
-			let formated_int_to_binary: String = format!("{:b}", formated_string_to_int);
-
-			let mut formated_binary_string = String::new();
-			formated_binary_string.push_str(&"0".repeat(16 - formated_int_to_binary.len()));
-			formated_binary_string.push_str(&formated_int_to_binary);
+				let mut formated_binary_string = String::new();
+				formated_binary_string.push_str(&"0".repeat(16 - formated_int_to_binary.len()));
+				formated_binary_string.push_str(&formated_int_to_binary);
 	
-			return formated_binary_string;
+				return formated_binary_string;
+			}
 		}
 
 		/// Returns the binary code of the dest mnemonic.
 		/// Returns: 3 bits (as an String)
 		pub fn dest(mnemonic: String) -> String {
-			println!("dest: {}", mnemonic);
 			if 	mnemonic == "M"   { "001".to_string() }
 			else if mnemonic == "D"   { "010".to_string() }
 			else if mnemonic == "MD"  { "011".to_string() }
@@ -208,7 +214,6 @@ pub mod assembler {
 		/// Returns the binary code of the comp mnemonic.
 		/// Returns: 7 bits (as an String)
 		pub fn comp(mnemonic: String) -> String {
-			println!("comp: {}", mnemonic);
 			if      mnemonic == "0"   { "0101010".to_string() }
 			else if mnemonic == "1"   { "0111111".to_string() }
 			else if mnemonic == "-1"  { "0111010".to_string() }
@@ -243,7 +248,6 @@ pub mod assembler {
 		/// Returns the binary code of the jump mnemonic.
 		/// Returns: 3 bits (as an String)
 		pub fn jump(mnemonic: String) -> String {
-			println!("jump: {}", mnemonic);
 			if      mnemonic == "JGT" { "001".to_string() }
 			else if mnemonic == "JEQ" { "010".to_string() }
 			else if mnemonic == "JGE" { "011".to_string() }
@@ -264,7 +268,7 @@ pub mod assembler {
 
 	impl SymbolTable {
 	
-		/// (Constructor) Creates a new empty symbol table.
+		/// (Constructor) Creates a new symbol table form clean/parsed Hack asm code.
 		pub fn new() -> Option<SymbolTable> {
 			
 			//Add predefined symbols
@@ -284,6 +288,7 @@ pub mod assembler {
 			new_symbol_vec.push("@R12".to_string());
 			new_symbol_vec.push("@R13".to_string());
 			new_symbol_vec.push("@R14".to_string());
+			new_symbol_vec.push("@R15".to_string());
 			new_symbol_vec.push("@SCREEN".to_string());
 			new_symbol_vec.push("@KBD".to_string());
 			new_symbol_vec.push("@SP".to_string());
@@ -328,9 +333,10 @@ pub mod assembler {
 		}
 	
 		/// Adds the pair (symbol, address) to the table.
-		pub fn addEntry(&mut self, symbol: String, address: u16) {
+		pub fn add_entry(&mut self, symbol: String, address: u16) {
 			self.symbol.push(symbol);
 			self.address.push(address);
+			self.next_var_address_pos = self.next_var_address_pos + 1;
 		}
 	
 		/// Does the symbol table contain the given symbol?
@@ -339,7 +345,7 @@ pub mod assembler {
 		}
 	
 		/// Returns the address associated with the symbol.
-		pub fn getAddress(&self, symbol: &String) -> u16 {
+		pub fn get_address(&self, symbol: &String) -> u16 {
 			let index = self.symbol.iter().position(|p| p == symbol).unwrap();
 			return self.address[index];
 		}

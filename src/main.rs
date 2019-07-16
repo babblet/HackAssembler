@@ -10,6 +10,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 use std::string::String;
+use std::convert::TryFrom;
 use hack_assembler::assembler::Code;
 use hack_assembler::assembler::Parser;
 use hack_assembler::assembler::SymbolTable;
@@ -37,25 +38,45 @@ fn main () {
 	while parser.has_more_commands() {
 		parser.advance();
 	}
-
 	println!("Finished parsing!");
 	
 
 	//Create outfile
 	let mut outfile: File = match File::create(file_path_output) {
-		Ok(file) => file,
+		Ok(file) => { 
+			println!("File {} was created", file_path_output.display());
+			file
+		},
 		Err(e) => panic!("Error when creating file: {}", e),
 	};
 
 	//Create a SymbolTable	
 	let mut symbol_table: SymbolTable = match SymbolTable::new() {
-		Some(obj) => obj,
-		None 	  => panic!("UNEXPECTED ERROR: Was not able to create SymbolTable!"),
+		Some(obj) => {
+			println!("SymbolTable was created");
+			obj
+		},
+		None => panic!("Error when creating SymbolTable"),
 	};
-	println!("Create file and a SymbolTable");
+
+	//Do a pass on the parsed lines and add the symbols to the SymbolTable
+	print!("Found symbols at positions: [");
+	for (index, line) in parser.lines.iter().enumerate() {
+		if line.commandType == CommandType::L {
+			let buffer = line.buffer.clone();
+			let (_, sliced_line) = buffer.split_at(1);
+			let mut formated_string: String = sliced_line.to_string();
+			formated_string.pop();
+
+			let formated_index: u16 = u16::try_from(index).unwrap();
+
+			symbol_table.add_entry(format!("@{}", formated_string), formated_index);
+		}
+	}
+	print!("]\n");
 
 	//Assemble the code
-	let mut file_buffer = String::new();	
+	let mut file_buffer = String::new();
 	for line in parser.lines.iter() {
 		println!("{}", line.buffer);
 		if line.commandType == CommandType::A {
@@ -71,12 +92,12 @@ fn main () {
 			file_buffer.push('\n');
 		} else {
 			println!("CommandType::L");
-			println!("{}",line.buffer);	
+			println!("{}",line.buffer);
 		}
 	}
 	match outfile.write(file_buffer.as_bytes()) {
 		Ok(total_bytes_writen) => println!("Write {} bytes to file", total_bytes_writen),
-		Err(e) => panic!("Error when writing to file: {}", e) 
+		Err(e) => panic!("Error when writing to file: {}", e)
 	}
 }
 
